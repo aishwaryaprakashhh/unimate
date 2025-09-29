@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uni - College Student Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js'></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .sidebar-bg { background-color: #ffffff; }
+        .nav-btn.active { background-color: #eef2ff; color: #4f46e5; font-weight: 600; }
+        .nav-btn.active i { color: #4f46e5 !important; }
+        .card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.2), 0 4px 6px -4px rgba(99, 102, 241, 0.2); }
+        .section { transition: opacity 0.3s ease-in-out; }
+        .section.hidden { opacity: 0; display: none; }
+        .btn-gradient { background-image: linear-gradient(to right, #6366f1, #8b5cf6); transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 7px 10px rgba(0, 0, 0, 0.15); }
+        #calendar-container { min-height: 650px; background: #ffffff; border-radius: 1rem; padding: 1rem; }
+        .fc th, .fc td, .fc-scrollgrid, .fc-scrollgrid-section > * { border: none !important; }
+        .fc .fc-toolbar-title { font-size: 1.5rem; font-weight: 700; color: #1f2937; }
+        .fc .fc-button { background: #f3f4f6 !important; color: #374151 !important; box-shadow: none !important; border-radius: 0.5rem !important; }
+        .fc .fc-button:hover { background: #e5e7eb !important; }
+        .fc .fc-col-header-cell-cushion { font-weight: 600; color: #6b7280; }
+        .fc .fc-day-today { background-color: transparent !important; }
+        .fc .fc-day-today .fc-daygrid-day-frame { background-color: #4338ca; border-radius: 0.75rem; box-shadow: 0 4px 14px 0 rgba(67, 56, 202, 0.3); }
+        .fc .fc-day-today .fc-daygrid-day-number { color: white; font-weight: bold; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; min-width: 10px; margin-right: 12px; }
+        .status-dot.completed { background-color: #34c759; }
+        .status-dot.not-started { background-color: #ff3b30; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="mainApp" class="min-h-screen bg-gray-50">
+        <nav class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <div class="bg-indigo-100 w-8 h-8 rounded-full flex items-center justify-center">
+                            <i class="fas fa-graduation-cap text-indigo-600"></i>
+                        </div>
+                        <span class="ml-2 text-xl font-bold text-gray-800">UniMate</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span id="welcomeUser" class="text-gray-600">Welcome, </span>
+                        <button onclick="logout()" class="text-gray-500 hover:text-indigo-600 transition">
+                            <i class="fas fa-sign-out-alt fa-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <div class="flex">
+            <div class="w-64 sidebar-bg shadow-md h-screen sticky top-0">
+                <div class="p-4">
+                    <nav class="space-y-2">
+                        <button data-section="dashboard" onclick="showSection('dashboard')" class="nav-btn w-full flex items-center px-4 py-3 text-left rounded-lg text-gray-700 hover:bg-gray-100 transition duration-200">
+                            <i class="fas fa-home fa-fw mr-3 text-indigo-600"></i> Dashboard
+                        </button>
+                        <button data-section="todo" onclick="showSection('todo')" class="nav-btn w-full flex items-center px-4 py-3 text-left rounded-lg text-gray-700 hover:bg-gray-100 transition duration-200">
+                            <i class="fas fa-tasks fa-fw mr-3 text-green-600"></i> To-Do List
+                        </button>
+                        <button data-section="expenses" onclick="showSection('expenses')" class="nav-btn w-full flex items-center px-4 py-3 text-left rounded-lg text-gray-700 hover:bg-gray-100 transition duration-200">
+                            <i class="fas fa-wallet fa-fw mr-3 text-red-600"></i> Expense Tracker
+                        </button>
+                        <button data-section="calendar" onclick="showSection('calendar')" class="nav-btn w-full flex items-center px-4 py-3 text-left rounded-lg text-gray-700 hover:bg-gray-100 transition duration-200">
+                            <i class="fas fa-calendar fa-fw mr-3 text-blue-600"></i> Calendar
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <div class="flex-1 p-8 relative"> 
+                <div id="dashboard" class="section absolute inset-8"> 
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Dashboard</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                         <div class="bg-white p-6 rounded-xl shadow-sm card-hover">
+                            <div class="flex items-center">
+                                <div class="bg-green-100 p-3 rounded-full"><i class="fas fa-tasks text-green-600 fa-lg"></i></div>
+                                <div class="ml-4">
+                                    <p class="text-sm text-gray-600">Tasks Today</p>
+                                    <p class="text-2xl font-bold text-gray-800" id="todayTasks">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm card-hover">
+                            <div class="flex items-center">
+                                <div class="bg-red-100 p-3 rounded-full"><i class="fas fa-dollar-sign text-red-600 fa-lg"></i></div>
+                                <div class="ml-4">
+                                    <p class="text-sm text-gray-600">This Month</p>
+                                    <p class="text-2xl font-bold text-gray-800" id="monthlySpent">$0.00</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm card-hover">
+                            <div class="flex items-center">
+                                <div class="bg-blue-100 p-3 rounded-full"><i class="fas fa-calendar-check text-blue-600 fa-lg"></i></div>
+                                <div class="ml-4">
+                                    <p class="text-sm text-gray-600">Due Soon</p>
+                                    <p class="text-2xl font-bold text-gray-800" id="dueSoonCount">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm card-hover">
+                            <div class="flex items-center">
+                                <div class="bg-purple-100 p-3 rounded-full"><i class="fas fa-graduation-cap text-purple-600 fa-lg"></i></div>
+                                <div class="ml-4">
+                                    <p class="text-sm text-gray-600">GPA</p>
+                                    <p class="text-2xl font-bold text-gray-800">3.7</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Recent Tasks</h3>
+                            <div id="recent-tasks-list" class="space-y-2"></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Upcoming Deadlines</h3>
+                            <div id="upcoming-deadlines-list" class="space-y-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="todo" class="section absolute inset-8 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-3xl font-bold text-gray-800">To-Do List</h2>
+                        <button onclick="addTask()" class="btn-gradient text-white px-5 py-2 rounded-lg font-semibold">
+                            <i class="fas fa-plus mr-2"></i>Add Task
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="mb-4">
+                            <input type="text" id="newTask" placeholder="Enter a new task..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        </div>
+                        <div id="taskList" class="space-y-3"></div>
+                    </div>
+                </div>
+
+                <div id="expenses" class="section absolute inset-8 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-3xl font-bold text-gray-800">Expense Tracker</h2>
+                         <button onclick="addExpense()" class="btn-gradient text-white px-5 py-2 rounded-lg font-semibold">
+                            <i class="fas fa-plus mr-2"></i>Add Expense
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-lg font-semibold text-gray-800">Monthly Budget</h3>
+                                <button id="budget-btn" onclick="toggleBudgetEdit()" class="text-sm text-indigo-600 hover:text-indigo-500 font-semibold">Set Budget</button>
+                            </div>
+                            <div class="flex items-baseline mt-2">
+                                <span class="text-3xl font-bold text-green-600">$</span>
+                                <input type="number" id="budget-input" value="500" class="w-full bg-transparent text-3xl font-bold text-green-600 border-none focus:ring-0 focus:outline-none p-0" disabled>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Spent This Month</h3>
+                            <p class="text-3xl font-bold text-red-600" id="totalSpent">$0.00</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Remaining</h3>
+                            <p class="text-3xl font-bold text-blue-600" id="remaining">$500.00</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <input type="text" id="expenseDescription" placeholder="Description" class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <input type="number" id="expenseAmount" placeholder="Amount" class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <select id="expenseCategory" class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="">Select Category</option>
+                                <option value="food">Food</option>
+                                <option value="books">Books</option>
+                                <option value="transport">Transport</option>
+                                <option value="entertainment">Entertainment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div id="expenseList" class="space-y-3"></div>
+                    </div>
+                </div>
+                
+                <div id="calendar" class="section absolute inset-8 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-3xl font-bold text-gray-800">Academic Calendar</h2>
+                         <button onclick="openAddEventModal()" class="btn-gradient text-white px-5 py-2 rounded-lg font-semibold">
+                            <i class="fas fa-plus mr-2"></i>Add Event
+                        </button>
+                    </div>
+                    <div id="calendar-container" class="bg-white rounded-xl shadow-sm p-4"></div>
+                    <div class="mt-6">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">Upcoming Assignments</h4>
+                        <div id="upcoming-events-list" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="addEventModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Add a New Event</h3>
+                <div class="mt-4 space-y-4 text-left">
+                    <div>
+                        <label for="eventTitle" class="block text-sm font-medium text-gray-700">Event Title</label>
+                        <input type="text" id="eventTitle" class="mt-1 w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="eventDate" class="block text-sm font-medium text-gray-700">Date</label>
+                        <input type="date" id="eventDate" class="mt-1 w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="eventPriority" class="block text-sm font-medium text-gray-700">Priority</label>
+                        <select id="eventPriority" class="mt-1 w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="items-center px-4 py-3 mt-4">
+                    <button onclick="addEvent()" class="btn-gradient w-full px-4 py-2 text-white text-base font-medium rounded-md">Add Event</button>
+                    <button onclick="closeAddEventModal()" class="mt-2 px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 focus:outline-none">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const API_URL = 'http://localhost:5001';
+
+    // --- CORE APP LOGIC ---
+    function logout() {
+        localStorage.removeItem('username');
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+    }
+
+    function showSection(sectionName) {
+        document.querySelectorAll('.section').forEach(s => {
+            s.style.display = 'none';
+            s.classList.add('hidden');
+        });
+        
+        const targetSection = document.getElementById(sectionName);
+        if (targetSection) {
+            targetSection.style.display = 'block';
+            setTimeout(() => {
+                targetSection.classList.remove('hidden');
+            }, 10);
+        }
+
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.nav-btn[data-section="${sectionName}"]`)?.classList.add('active');
+
+        if (sectionName === 'calendar' && calendar) {
+            setTimeout(() => {
+                calendar.updateSize();
+            }, 10);
+        }
+    }
+
+    function escapeHtml(unsafe) {
+        return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    // --- TO-DO LIST FUNCTIONALITY ---
+    async function fetchTodos() {
+        const token = localStorage.getItem('token');
+        if (!token) { window.location.href = 'login.html'; return; }
+        try {
+            const res = await fetch(`${API_URL}/api/todos`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const todos = await res.json();
+            renderTodos(todos);
+        } catch (err) { console.error('Error fetching todos:', err); }
+    }
+
+    function renderTodos(todos) {
+        const taskList = document.getElementById('taskList');
+        taskList.innerHTML = '';
+        if (todos && todos.length > 0) {
+            todos.forEach(todo => {
+                const taskItem = document.createElement('div');
+                taskItem.className = 'flex items-center justify-between p-4 bg-gray-50 rounded-lg task-item';
+                taskItem.innerHTML = `<div class="flex items-center"><input type="checkbox" class="mr-3 w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" onchange="toggleTask('${todo._id}')" ${todo.completed ? 'checked' : ''}><span class="text-gray-700 ${todo.completed ? 'line-through text-gray-500' : ''}">${escapeHtml(todo.text)}</span></div><button class="text-red-500 hover:text-red-700" onclick="deleteTask('${todo._id}')"><i class="fas fa-trash"></i></button>`;
+                taskList.appendChild(taskItem);
+            });
+        }
+        updateTaskCount();
+        renderRecentTasks(todos);
+    }
+
+    async function addTask() {
+        const taskInput = document.getElementById('newTask');
+        const text = taskInput.value.trim();
+        if (text) {
+            const token = localStorage.getItem('token');
+            await fetch(`${API_URL}/api/todos`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ text }) });
+            taskInput.value = '';
+            fetchTodos();
+        }
+    }
+
+    async function toggleTask(id) {
+        const token = localStorage.getItem('token');
+        await fetch(`${API_URL}/api/todos/${id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
+        fetchTodos();
+    }
+
+    async function deleteTask(id) {
+        const token = localStorage.getItem('token');
+        await fetch(`${API_URL}/api/todos/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        fetchTodos();
+    }
+
+    function updateTaskCount() {
+        const uncompletedTasks = document.querySelectorAll('#taskList .task-item input[type="checkbox"]:not(:checked)');
+        document.getElementById('todayTasks').textContent = uncompletedTasks.length;
+    }
+
+    function renderRecentTasks(todos) {
+        const listContainer = document.getElementById('recent-tasks-list');
+        listContainer.innerHTML = '';
+        const recentTodos = todos.slice(0, 5);
+        
+        if (recentTodos.length === 0) {
+            listContainer.innerHTML = '<p class="text-gray-500">No recent tasks.</p>';
+            return;
+        }
+
+        recentTodos.forEach(todo => {
+            const statusClass = todo.completed ? 'completed' : 'not-started';
+            const textClass = todo.completed ? 'line-through text-gray-400' : 'text-gray-700';
+            const taskItem = document.createElement('div');
+            taskItem.className = 'flex items-center p-3 bg-gray-50 rounded-lg';
+            taskItem.innerHTML = `<span class="status-dot ${statusClass}"></span><span class="${textClass}">${escapeHtml(todo.text)}</span>`;
+            listContainer.appendChild(taskItem);
+        });
+    }
+
+    function renderUpcomingDeadlines(events) {
+        const listContainer = document.getElementById('upcoming-deadlines-list');
+        listContainer.innerHTML = '';
+        const upcomingEvents = events
+            .map(e => ({ ...e, startDate: new Date(e.date) }))
+            .filter(e => e.startDate >= new Date(new Date().toDateString()))
+            .sort((a, b) => a.startDate - b.startDate)
+            .slice(0, 5);
+        document.getElementById('dueSoonCount').textContent = upcomingEvents.length;
+        if (upcomingEvents.length === 0) {
+            listContainer.innerHTML = '<p class="text-gray-500">No upcoming deadlines.</p>';
+            return;
+        }
+        upcomingEvents.forEach(event => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const eventDate = new Date(event.date);
+            eventDate.setHours(0, 0, 0, 0);
+            const diffTime = eventDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            let tagInfo = { 
+                bg: 'bg-blue-100', 
+                text: 'text-blue-800', 
+                label: `${Math.ceil(diffDays / 7)} week${Math.ceil(diffDays / 7) > 1 ? 's' : ''}` 
+            };
+            if (diffDays <= 1) {
+                tagInfo = { bg: 'bg-red-100', text: 'text-red-800', label: 'Tomorrow' };
+            } else if (diffDays <= 7) {
+                tagInfo = { bg: 'bg-yellow-100', text: 'text-yellow-800', label: `${diffDays} days` };
+            }
+            const deadlineItem = document.createElement('div');
+            deadlineItem.className = `flex items-center justify-between p-3 ${tagInfo.bg} rounded-lg`;
+            deadlineItem.innerHTML = `
+                <span class="text-gray-800 font-medium">${escapeHtml(event.title)}</span>
+                <span class="font-semibold ${tagInfo.text}">${tagInfo.label}</span>
+            `;
+            listContainer.appendChild(deadlineItem);
+        });
+    }
+
+    // --- EXPENSE TRACKER FUNCTIONALITY ---
+    async function fetchExpenses() {
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch(`${API_URL}/api/expenses`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const expenses = await res.json();
+            renderExpenses(expenses);
+        } catch (err) { console.error('Error fetching expenses:', err); }
+    }
+
+    function renderExpenses(expenses) {
+        const expenseList = document.getElementById('expenseList');
+        expenseList.innerHTML = '';
+        let totalSpent = 0;
+        const categoryColors = { food: 'bg-green-100 text-green-800', books: 'bg-blue-100 text-blue-800', transport: 'bg-yellow-100 text-yellow-800', entertainment: 'bg-purple-100 text-purple-800', other: 'bg-gray-100 text-gray-800' };
+        
+        if (expenses && expenses.length > 0) {
+            expenses.forEach(expense => {
+                totalSpent += expense.amount;
+                const expenseItem = document.createElement('div');
+                expenseItem.className = 'flex items-center justify-between p-4 bg-gray-50 rounded-lg';
+                expenseItem.innerHTML = `<div><span class="font-medium text-gray-800">${escapeHtml(expense.description)}</span><span class="ml-2 px-2 py-1 ${categoryColors[expense.category] || categoryColors['other']} text-xs rounded-full">${expense.category}</span></div><div class="flex items-center"><span class="text-red-600 font-semibold mr-3">$${expense.amount.toFixed(2)}</span><button class="text-red-500 hover:text-red-700" onclick="deleteExpense('${expense._id}')"><i class="fas fa-trash"></i></button></div>`;
+                expenseList.appendChild(expenseItem);
+            });
+        }
+        updateExpenseTotals(totalSpent);
+    }
+
+    function updateExpenseTotals(totalSpent) {
+        const budget = parseFloat(localStorage.getItem('monthlyBudget')) || 500;
+        const remaining = budget - totalSpent;
+        document.getElementById('totalSpent').textContent = `$${totalSpent.toFixed(2)}`;
+        document.getElementById('monthlySpent').textContent = `$${totalSpent.toFixed(2)}`;
+        document.getElementById('remaining').textContent = `$${remaining.toFixed(2)}`;
+    }
+
+    async function addExpense() {
+        const token = localStorage.getItem('token');
+        const description = document.getElementById('expenseDescription').value.trim();
+        const amount = parseFloat(document.getElementById('expenseAmount').value);
+        const category = document.getElementById('expenseCategory').value;
+        if (!description || isNaN(amount) || amount <= 0 || !category) { return alert('Please fill in all expense fields with valid values.'); }
+        await fetch(`${API_URL}/api/expenses`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ description, amount, category })
+        });
+        document.getElementById('expenseDescription').value = '';
+        document.getElementById('expenseAmount').value = '';
+        document.getElementById('expenseCategory').value = '';
+        fetchExpenses();
+    }
+
+    async function deleteExpense(id) {
+        const token = localStorage.getItem('token');
+        await fetch(`${API_URL}/api/expenses/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        fetchExpenses();
+    }
+    
+    // --- Budget Management Functions ---
+    function loadBudget() {
+        const budgetInput = document.getElementById('budget-input');
+        const savedBudget = localStorage.getItem('monthlyBudget');
+        if (savedBudget) {
+            budgetInput.value = parseFloat(savedBudget).toFixed(2);
+        } else {
+            localStorage.setItem('monthlyBudget', '500');
+            budgetInput.value = '500.00';
+        }
+        fetchExpenses();
+    }
+
+    function toggleBudgetEdit() {
+        const budgetInput = document.getElementById('budget-input');
+        const budgetBtn = document.getElementById('budget-btn');
+        if (budgetInput.disabled) {
+            budgetInput.disabled = false;
+            budgetInput.focus();
+            budgetBtn.textContent = 'Save';
+            budgetInput.style.borderBottom = '2px solid #4f46e5';
+        } else {
+            const newBudgetValue = parseFloat(budgetInput.value);
+            if (!isNaN(newBudgetValue) && newBudgetValue >= 0) {
+                localStorage.setItem('monthlyBudget', newBudgetValue);
+                budgetInput.value = newBudgetValue.toFixed(2);
+                budgetInput.disabled = true;
+                budgetBtn.textContent = 'Set Budget';
+                budgetInput.style.borderBottom = 'none';
+                fetchExpenses(); 
+            } else {
+                alert('Please enter a valid budget amount.');
+            }
+        }
+    }
+
+    // --- CALENDAR FUNCTIONALITY ---
+    let calendar; 
+    let isCalendarInitialized = false;
+
+    function initializeCalendar() {
+        if (isCalendarInitialized) return;
+        const calendarEl = document.getElementById('calendar-container');
+        if (!calendarEl) return;
+        const token = localStorage.getItem('token');
+        
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+            height: 'auto',
+            eventDisplay: 'background',
+            events: function(fetchInfo, successCallback, failureCallback) {
+                fetch(`${API_URL}/api/events`, { headers: { 'Authorization': `Bearer ${token}` } })
+                    .then(response => response.json())
+                    .then(data => {
+                        renderUpcomingDeadlines(data); // Call this first with raw data
+                        const formattedDataForCalendar = data.map(event => ({
+                            id: event._id,
+                            title: event.title,
+                            start: event.date,
+                            allDay: true,
+                            extendedProps: { priority: event.priority }
+                        }));
+                        successCallback(formattedDataForCalendar);
+                        renderUpcomingEventsList(formattedDataForCalendar); // Call this with formatted data
+                    })
+                    .catch(error => failureCallback(error));
+            },
+            eventDataTransform: function(eventInfo) {
+                if (eventInfo.extendedProps.priority === 'High') {
+                    eventInfo.backgroundColor = '#ef4444';
+                    eventInfo.borderColor = '#ef4444';
+                } else if (eventInfo.extendedProps.priority === 'Medium') {
+                    eventInfo.backgroundColor = '#f59e0b';
+                    eventInfo.borderColor = '#f59e0b';
+                } else if (eventInfo.extendedProps.priority === 'Low') {
+                    eventInfo.backgroundColor = '#3b82f6';
+                    eventInfo.borderColor = '#3b82f6';
+                }
+                eventInfo.textColor = '#ffffff';
+                return eventInfo;
+            }
+        });
+        isCalendarInitialized = true;
+        calendar.render(); 
+    }
+    
+    function renderUpcomingEventsList(events) {
+        const listContainer = document.getElementById('upcoming-events-list');
+        listContainer.innerHTML = '';
+        const priorityStyles = {
+            High:   { bg: 'bg-red-50',   text: 'text-red-700',   border: 'border-red-400' },
+            Medium: { bg: 'bg-yellow-50',text: 'text-yellow-700',border: 'border-yellow-400' },
+            Low:    { bg: 'bg-blue-50',  text: 'text-blue-700',  border: 'border-blue-400' }
+        };
+        const upcomingEvents = events
+            .map(e => ({ ...e, startDate: new Date(e.start) }))
+            .filter(e => e.startDate >= new Date(new Date().toDateString()))
+            .sort((a, b) => a.startDate - b.startDate)
+            .slice(0, 5);
+        document.getElementById('dueSoonCount').textContent = upcomingEvents.length;
+        if (upcomingEvents.length === 0) {
+            listContainer.innerHTML = '<div class="p-4 bg-gray-50 rounded-lg"><p class="text-gray-500">No upcoming assignments.</p></div>';
+            return;
+        }
+        upcomingEvents.forEach(event => {
+            const formattedDate = new Date(event.start).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'long', day: 'numeric', year: 'numeric' });
+            const priority = event.extendedProps.priority;
+            const styles = priorityStyles[priority] || { bg: 'bg-gray-50', text: 'text-gray-800', border: 'border-gray-400' };
+            const eventItem = document.createElement('div');
+            eventItem.className = `flex items-center justify-between p-4 ${styles.bg} rounded-lg border-l-4 ${styles.border}`;
+            eventItem.innerHTML = `
+                <div class="flex-1">
+                    <span class="font-medium text-gray-800">${escapeHtml(event.title)}</span>
+                    <p class="text-sm text-gray-600">Due: ${formattedDate}</p>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-sm font-semibold ${styles.text} mr-4">${priority} Priority</span>
+                    <button onclick="deleteEvent('${event.id}')" class="text-red-500 hover:text-red-700 transition">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>`;
+            listContainer.appendChild(eventItem);
+        });
+    }
+
+    function openAddEventModal() { document.getElementById('addEventModal').classList.remove('hidden'); }
+    function closeAddEventModal() { document.getElementById('addEventModal').classList.add('hidden'); }
+
+    async function addEvent() {
+        const token = localStorage.getItem('token');
+        const title = document.getElementById('eventTitle').value.trim();
+        const date = document.getElementById('eventDate').value;
+        const priority = document.getElementById('eventPriority').value;
+        if (!title || !date) { return alert('Please enter a title and date for the event.'); }
+        await fetch(`${API_URL}/api/events`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ title, date, priority })
+        });
+        closeAddEventModal();
+        calendar.refetchEvents();
+    }
+
+    async function deleteEvent(eventId) {
+        if (!eventId || eventId === 'undefined') {
+            console.error("Delete failed: Invalid event ID.");
+            return;
+        }
+        const token = localStorage.getItem('token');
+        await fetch(`${API_URL}/api/events/${eventId}`, { 
+            method: 'DELETE', 
+            headers: { 'Authorization': `Bearer ${token}` } 
+        });
+        calendar.refetchEvents();
+    }
+
+    // --- PAGE INITIALIZATION ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const user = localStorage.getItem("username") || "Student";
+        document.getElementById("welcomeUser").textContent = `Welcome, ${user}!`;
+        fetchTodos();
+        loadBudget();
+        initializeCalendar();
+        showSection('dashboard');
+        document.getElementById('newTask').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addTask();
+        });
+    });
+</script>
+</body>
+</html>
